@@ -18,6 +18,8 @@ env = Env()
 env.read_env('./host.env')
 ETH_API_KEY = env('ETH_API_KEY')
 PRIVKEY     = env('PRIVKEY')
+PUBSUB_URL  = env('PUBSUB_URL')
+env.seal()
 
 # More configuration (not necessarily private)
 CONTRACT="0x435d16671575372CAe5228029A1a9857e9482849"
@@ -56,7 +58,7 @@ def extract_fmspc(chain):
 def onboarder_thread():
     # Subscribe to events requesting onboarding
     while True:
-        url = 'http://localhost:5001/subscribe'
+        url = f'{PUBSUB_URL}/subscribe'
         response = requests.get(url, stream=True)
         for line in response.iter_lines():
             o = json.loads(line.strip())['data']
@@ -134,7 +136,7 @@ def register():
     open('register_quote.hex','w').write(quote)
 
     obj = dict(addr=addr,pubk=pubk,quote=quote)
-    url = "http://localhost:5001/push"
+    url = f"{PUBSUB_URL}/push"
     resp = requests.post(url, json=obj)
     if resp.status_code != 200:
         print(resp)

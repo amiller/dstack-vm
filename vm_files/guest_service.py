@@ -103,7 +103,7 @@ def onboard():
     print(cmd)
     out = subprocess.check_output(cmd, shell=True).strip()
     h = bytes.fromhex(out[2:].decode('utf-8'))
-    sig = Account.from_key(xPriv).signHash(h)
+    sig = Account.from_key(xPriv).unsafe_sign_hash(h)
     sig = sig.v.to_bytes(1,'big') +  sig.r.to_bytes(32,'big') + sig.s.to_bytes(32,'big')
     print(sig, type(sig), encrypted_message)
     return jsonify(dict(sig=sig.hex(), ciph=encrypted_message)), 200
