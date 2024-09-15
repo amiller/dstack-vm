@@ -19,6 +19,7 @@ env = Env()
 env.read_env('/mnt/host_volume/guest.env')
 ETH_API_KEY = env('ETH_API_KEY')
 HOST_ADDR   = env('HOST_ADDR')
+MOCK_VERIFY_URL   = env('MOCK_VERIFY_URL')
 env.seal()
 
 # Fixed configuration values forming part of the TCB
@@ -67,7 +68,7 @@ def onboard():
     quote = request.form['quote']
 
     # Verify the quote
-    url = 'http://localhost:8080/verify'
+    url = f'{MOCK_VERIFY_URL}/verify'
     resp = requests.post(url, data=bytes.fromhex(quote))
 
     # Parse out the relevant details

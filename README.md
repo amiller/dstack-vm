@@ -5,8 +5,10 @@
 It's not necessary to have TDX, since this image is meant to be easy to run in a environment. Instead it's just necessary to install qemu and libvirt.
 
 ```bash
-apt-get install qemu qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager
+apt-get install qemu qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager dumpasn1
 ```
+
+Note: right now forgetting to install `dumpasn1` doesn't give a clear warning.
 
 We have to start by downloading a base image if you don't have it.
 The ubuntu minimal is under 300MB, and after we're done installing packages it will be under 2GB.
