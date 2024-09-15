@@ -1,6 +1,6 @@
 *~
 *.img
-host_volume/
+*.quote
 *.dat
 *.hex
 *.env
