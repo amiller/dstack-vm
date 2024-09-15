@@ -1,0 +1,11 @@
+[Unit]
+Description=Startup Script Service
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/startup_script.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
