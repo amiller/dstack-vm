@@ -23,13 +23,20 @@ Then run
 
 It's convenient when developing to take a copy of the image after `apt get update`. For this have a look at `build_vm_dev.sh`. It's necessary to `rm ubuntu_vm.step1.img` to make it rebuild the partial base.
 
-## Running the note and join the network
+## Running the node and join the test instance
 
-See `host.env.example` as it's necessary to fill some parameters 
+The main goal will be to take our VM and connect it to the testnet network, retrieving a copy of the shared key.
+
+### Running the host services
+
+First we need to configure and run a helper script on the untrusted host. 
+
+See `host.env.example` as it's necessary to fill some parameters:
+```
 PRIVKEY=
 ETH_API_KEY=
-PUBSUB_URL=http://pubsub.2309j209jf3209j.ln.soc1024.com
-
+PUBSUB_URL=
+```
 
 ## Helping other nodes join the network
 

@@ -65,7 +65,6 @@ def extract_fmspc(chain):
             
 # Register, or bootstrap if this is the first time
 if is_bootstrapped():
-#if len(sys.argv) < 2 or sys.argv[1] != "4002":
     print('Registering...', file=sys.stderr)
     # Generate a private key and a corresponding public key
     private_key = PrivateKey.generate()
@@ -113,8 +112,7 @@ else:
     print('Not bootstrapped', file=sys.stderr)
 
     # Generate the random key
-    #xPriv = os.urandom(32)
-    xPriv = b"deadbeef"*4
+    xPriv = os.urandom(32)
     addr = Account.from_key(xPriv).address
 
     # Get the quote
