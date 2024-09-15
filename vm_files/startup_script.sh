@@ -11,7 +11,7 @@ exec > /var/log/startup_script.log 2>&1
 dhclient ens3
 
 # Variables
-CONTAINER_PATH="/mnt/host_volume/encrypted_container.img" # for LUKS
+CONTAINER_PATH="/mnt/host_volume/encrypted_container.img"
 MOUNT_POINT="/mnt/encrypted_data"
 LOOP_DEVICE=$(losetup -f)  # Automatically find the next available loop device
 DECRYPTED_NAME="encrypted_volume"
@@ -26,13 +26,13 @@ if ! mountpoint -q /mnt/host_volume; then
 fi
 
 # Run the Register Script
-XPRIV=$(register.py)
+XPRIV=$(python3 /root/register.py)
 echo "Dstack node onboarded. Enclave has the key..."
 
 # Check if the encrypted container exists; create it if not
 if [ ! -f "$CONTAINER_PATH" ]; then
     echo "Encrypted container not found. Creating a new one."
-    dd if=/dev/zero of="$CONTAINER_PATH" bs=1M count=100  # 100MB container; adjust size as needed
+    dd if=/dev/zero of="$CONTAINER_PATH" bs=1M count=120  # 120MB container; adjust size as needed
     echo ${XPRIV} | cryptsetup luksFormat "$CONTAINER_PATH" --key-file -
 fi
 
@@ -41,9 +41,10 @@ losetup "$LOOP_DEVICE" "$CONTAINER_PATH"
 
 # Unlock the LUKS container
 echo ${XPRIV} | cryptsetup open "$LOOP_DEVICE" "$DECRYPTED_NAME" --key-file -
+echo "Encrypted container unlocked."
 
 # Create filesystem if not exists
-if [ ! -d "$MOUNT_POINT" ] || [ -z "$(ls -A "$MOUNT_POINT")" ]; then
+if [ -z "$(blkid -o value -s TYPE /dev/mapper/$DECRYPTED_NAME)" ]; then
     echo "Creating filesystem in decrypted container."
     mkfs.ext4 /dev/mapper/"$DECRYPTED_NAME"
 fi
@@ -60,6 +61,6 @@ else
 fi
 
 # Run the Python script
-XPRIV=${XPRIV} guest_service.py &
-pushd /root
+pushd /root/
+XPRIV=${XPRIV} python3 guest_service.py &
 python3 app.py
