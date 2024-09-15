@@ -9,23 +9,14 @@ exec > /var/log/startup_script.log 2>&1
 # Setup the network
 dhclient ens3
 
+# Run the script
+register.py
+
 # Variables
-KEY_URL="http://10.0.2.2:8000/key"
 CONTAINER_PATH="/mnt/host_volume/encrypted_container.img" # for LUKS
 MOUNT_POINT="/mnt/encrypted_data"
 LOOP_DEVICE=$(losetup -f)  # Automatically find the next available loop device
 DECRYPTED_NAME="encrypted_volume"
-
-if true; then
-    # Option 1: Dummy attestation    
-    APPDATA=$(head -c32 /dev/urandom | sha256sum | head -c 64)
-    QUOTE=$(curl -k http://ns31695324.ip-141-94-163.eu:10080/attestation/${APPDATA} --output - | od -An -v -tx1 | tr -d ' \n')
-else
-    # Option 2: Real attestation
-fi
-
-# Fetch the key from the remote server
-wget -O /tmp/keyfile "$KEY_URL"
 
 # Ensure the key was downloaded
 if [ ! -f /tmp/keyfile ]; then

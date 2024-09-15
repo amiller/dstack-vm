@@ -21,7 +21,7 @@ PRIVKEY     = env('PRIVKEY')
 
 # More configuration (not necessarily private)
 CONTRACT="0x435d16671575372CAe5228029A1a9857e9482849"
-GUEST_SERVICE="http://localhost:4002"
+GUEST_SERVICE="http://localhost:4001"
 
 # Set the cast env variables
 os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
