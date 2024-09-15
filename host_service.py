@@ -19,11 +19,12 @@ env.read_env('./host.env')
 ETH_API_KEY = env('ETH_API_KEY')
 PRIVKEY     = env('PRIVKEY')
 PUBSUB_URL  = env('PUBSUB_URL')
+GUEST_SERVICE  = env('GUEST_SERVICE')
+CONTRACT = env('CONTRACT')
 env.seal()
 
 # More configuration (not necessarily private)
-CONTRACT="0x435d16671575372CAe5228029A1a9857e9482849"
-GUEST_SERVICE="http://localhost:4001"
+
 
 # Set the cast env variables
 os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
@@ -113,11 +114,6 @@ t.start()
 
 # Start the rpc server
 app = Flask(__name__)
-
-if 0:
-    cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'bootstrap(address)' 0x0000000000000000000000000000000000000000"
-    print(cmd)
-    print(subprocess.check_output(cmd, shell=True).decode('utf-8'))
 
 @app.route('/bootstrap', methods=['POST'])
 def bootstrap():
