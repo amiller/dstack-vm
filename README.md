@@ -18,7 +18,7 @@ Then run
 ./build_vm.sh
 ```
 
-It's convenient when developing to take a copy of the image after `apt get update`
+It's convenient when developing to take a copy of the image after `apt get update`. For this have a look at `build_vm_dev.sh`. It's necessary to `rm ubuntu_vm.step1.img` to make it rebuild the partial base.
 
 ## Helping other nodes join the network
 

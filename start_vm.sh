@@ -1,6 +1,8 @@
 set -x
 
-qemu-img create -f qcow2 -b ./ubuntu_vm2.img -F qcow2 ubuntu_vm_overlay.img
+BASE=${1:-./ubuntu_vm.img}
+
+qemu-img create -f qcow2 -b $BASE -F qcow2 ubuntu_vm_overlay.img
 
 qemu-system-x86_64 \
     -enable-kvm \

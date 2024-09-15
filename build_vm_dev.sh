@@ -7,9 +7,9 @@ set -ex
 #   So instead it's only practical with a couple cache points
 
 # Step 1
-if false; then
-    qemu-img convert -f qcow2 ./ubuntu-minimal.img -O qcow2 ubuntu_vm.img
-    virt-customize -a ubuntu_vm.img \
+if [ ! -f "./ubuntu_vm.step1.img" ]; then
+    qemu-img convert -f qcow2 ./ubuntu-minimal.img -O qcow2 ./ubuntu_vm.step1.img
+    virt-customize -a ./ubuntu_vm.step1.img \
       --update \
       --install cryptsetup,wget,python3-pip,isc-dhcp-client \
       --install pipx,python3-nacl,python3-flask,python3-requests \
@@ -18,8 +18,8 @@ fi
 
 # Step 2
 if true; then
-    cp ubuntu_vm.img ubuntu_vm2.img
-    virt-customize -a ubuntu_vm2.img \
+    cp ubuntu_vm.step1.img ubuntu_vm_dev.img
+    virt-customize -a ubuntu_vm_dev.img \
     --copy-in foundry_nightly_linux_amd64.tar.gz:/root \
     --run-command 'tar -xzf /root/foundry_nightly_linux_amd64.tar.gz -C /usr/local/bin' \
     --copy-in vm_files/startup_script.sh:/usr/local/bin/ \
