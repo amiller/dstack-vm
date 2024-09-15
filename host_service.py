@@ -7,16 +7,21 @@ import subprocess
 import json
 import sys
 import time
+import requests
+import base64
+import hashlib
+import re
+import eth_abi
 
-# Parameters to read
+# Read private environment vars
 env = Env()
 env.read_env('./host.env')
 ETH_API_KEY = env('ETH_API_KEY')
 PRIVKEY     = env('PRIVKEY')
 
-# Fixed values
-CONTRACT="0xC06f4d6decf861233A45cD4a21AEcB2FB17F7681"
-GUEST_SERVICE="http://localhost:4001"
+# More configuration (not necessarily private)
+CONTRACT="0x435d16671575372CAe5228029A1a9857e9482849"
+GUEST_SERVICE="http://localhost:4002"
 
 # Set the cast env variables
 os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
@@ -27,29 +32,77 @@ def latest():
     cmd = "cast block-number"
     return subprocess.check_output(cmd, shell=True).decode('utf-8')
 
+def extract_fmspc(chain):
+    d = base64.b64decode(chain).decode('utf-8')
+    first = d.split('-----END CERTIFICATE-----')[0] +\
+        '-----END CERTIFICATE-----'
+    out = subprocess.check_output('openssl x509 -outform DER -out tmp.der', input=first.encode('utf-8'), shell=True)
+    proc = subprocess.Popen('dumpasn1 tmp.der', stdin=None, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, text=True)
+    for line in proc.stdout:
+        if "OBJECT IDENTIFIER '1 2 840 113741 1 13 1 4'" in line:
+            octet_line = next(proc.stdout)
+            # Extract hex bytes using regex
+            match = re.search(r'OCTET STRING\s+([A-F0-9 ]+)', octet_line)
+            if match:
+                hex_value = match.group(1).replace(' ', '')
+                break
+    return hex_value
 
-# Helper thread
+##################
+# Onboarder thread
+##################
+# Help other nodes join the network.
+
 def onboarder_thread():
     # Subscribe to events requesting onboarding
-    print('Background thread')
-    prev = int(latest())-10
     while True:
-        block = int(latest())
-        cmd = f'cast logs --from-block={prev} --to-block={block} -j "Requested(address)" {CONTRACT}'
-        out = subprocess.check_output(cmd, shell=True)
-        obj = json.loads(out)
-        for o in obj:
-            print('Onboarding request received:', o)
-            addr = '0x' + o['topics'][1][-40:]
+        url = 'http://localhost:5001/subscribe'
+        response = requests.get(url, stream=True)
+        for line in response.iter_lines():
+            o = json.loads(line.strip())['data']
+            
+            print('Onboarding request observed')
+            print('pubk:', o['pubk'])
+            pubk = o['pubk']
+            addr = o['addr']
+            quote = o['quote']
 
-            # Find the blob data
+            # Let's check this actually corresponds to a logged request
+            # url = f"cast call {CONTRACT} 'requested(address)' {addr}"
 
-            # Verify the quote
+            # Let's check the quote is valid
+            url = 'http://localhost:8080/verify'
+            resp = requests.post(url, data=bytes.fromhex(o['quote']))
 
-            # Encrypt the ciphertext
+            # Parse out the relevant details
+            obj = resp.json()
+            header_user_data = base64.b64decode(obj['header']['user_data']).hex()
+            report_data = base64.b64decode(obj['td_quote_body']['report_data']).hex()
+            mrtd = base64.b64decode(obj['td_quote_body']['mr_td']).hex()
+            chain = obj['signed_data']['certification_data']['qe_report_certification_data']['pck_certificate_chain_data']['pck_cert_chain']
+            mrtd_hash = hashlib.sha256(bytes.fromhex(mrtd)).hexdigest()
+            FMSPC = extract_fmspc(chain)
+            print('FMSPC:', FMSPC)
+            print('report_data:', report_data)
+            print('mrtd:', mrtd)
+            print('mrtd_hash:', mrtd_hash)
+            print('header_user_data:', header_user_data)
 
-            # Go ahead and cast send
-        prev = block + 1
+            # Pass the quote to the enclave
+            # It will return a signature and ciphertext
+            resp = requests.post(f"{GUEST_SERVICE}/onboard", data=dict(
+                addr=addr,
+                quote=quote,
+                pubk=pubk,
+            ))
+
+            obj = resp.json()
+            sig = obj['sig']
+            enc_message = obj['ciph']
+            
+            # Go ahead and cast send the resulting sig
+            cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'onboard(address, bytes16, bytes32, bytes, bytes)' {addr} 0x{FMSPC}00000000000000000000 0x{mrtd_hash} 0x{enc_message} 0x{sig}"
+            out = subprocess.check_output(cmd, shell=True).decode('utf-8')
         time.sleep(4)
 
 from threading import Thread
@@ -79,22 +132,32 @@ def register():
     pubk  = request.form['pubk']
     quote = request.form['quote']
     open('register_quote.hex','w').write(quote)
-    cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'register(address,bytes)' {addr} {sig}"
-    subprocess.check_output(cmd, shell=True).decode('utf-8')
-    
-    # cast tx bootstrap(addr), blob(pubk,quote)
-    # Subscribe to wait for bootstrap
-    # --subscribe not supported
+
+    obj = dict(addr=addr,pubk=pubk,quote=quote)
+    url = "http://localhost:5001/push"
+    resp = requests.post(url, json=obj)
+    if resp.status_code != 200:
+        print(resp)
+        return resp.content
+
+    # Wait for the onboarding flow to complete
+    # Then pass back the ciphertext
     while True:
         block = int(latest())
-        cmd = f'cast logs --from-block={block-10} --to-block={block+10} -j "Onboarded(address indexed)" {addr} {CONTRACT}'
+        cmd = f'cast logs --from-block={block-10} --to-block={block+10} --address {CONTRACT} -j "Onboarded(address indexed, bytes16, bytes32, bytes)" {addr} '
+        #print(cmd)
         out = subprocess.check_output(cmd, shell=True)
         obj = json.loads(out)
         if obj:
             break
+        
         print('.',end='')
         sys.stdout.flush()
         time.sleep(4)
+    print(obj)
+    data = bytes.fromhex(obj[0]['data'][2:])
+    _,_,ciph = eth_abi.decode(['bytes16','bytes32','bytes'], data)
+    return ciph, 200
 
 
 @app.route('/key', methods=['GET'])
