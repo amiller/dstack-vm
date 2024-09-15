@@ -69,6 +69,21 @@ In the dev build script the root password will be set to '' so you can type 'roo
 
 Once in the terminal, `tail -N 100 -F /var/log/startup_script.log` will show you how the onboarding process is going. If everything went well, you should see something like the following:
 ```
+root@ubuntu:~# cat /var/log/startup_script.log 
+Registering...
+public_key: ca87617de83bbb3956ae9263d5ab648cbb002e3cb8e4eb68171420b8dae05031
+Dstack node onboarded. Enclave has the key...
+Encrypted container unlocked.
+Decrypted filesystem mounted at /mnt/encrypted_data.
+/root /
+ * Serving Flask app 'guest_service'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:4001
+ * Running on http://10.0.2.15:4001
+Press CTRL+C to quit
+Hash of file in encrypted container: 35f52b34a8fb62e866f82c0578bd4b7b6cce8b5c381ffb186426681d5475e0d5
 ```
 
 ## Helping other nodes join the network

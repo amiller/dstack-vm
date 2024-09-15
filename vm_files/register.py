@@ -20,6 +20,7 @@ env = Env()
 env.read_env('/mnt/host_volume/guest.env')
 ETH_API_KEY = env('ETH_API_KEY')
 HOST_ADDR   = env('HOST_ADDR')
+env.seal()
 
 # Fixed configuration values forming part of the TCB
 CONTRACT="0x435d16671575372CAe5228029A1a9857e9482849"
