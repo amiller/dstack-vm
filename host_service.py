@@ -93,11 +93,15 @@ def onboarder_thread():
 
             # Pass the quote to the enclave
             # It will return a signature and ciphertext
-            resp = requests.post(f"{GUEST_SERVICE}/onboard", data=dict(
-                addr=addr,
-                quote=quote,
-                pubk=pubk,
-            ))
+            try: 
+                resp = requests.post(f"{GUEST_SERVICE}/onboard", data=dict(
+                    addr=addr,
+                    quote=quote,
+                    pubk=pubk,
+                ))
+            except requests.exceptions.ConnectionError:
+                print("Can't help yet")
+                continue
 
             obj = resp.json()
             sig = obj['sig']
@@ -106,11 +110,8 @@ def onboarder_thread():
             # Go ahead and cast send the resulting sig
             cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'onboard(address, bytes16, bytes32, bytes, bytes)' {addr} 0x{FMSPC}00000000000000000000 0x{mrtd_hash} 0x{enc_message} 0x{sig}"
             out = subprocess.check_output(cmd, shell=True).decode('utf-8')
-        time.sleep(4)
 
-from threading import Thread
-t = Thread(target=onboarder_thread)
-t.start()
+        time.sleep(4)
 
 # Start the rpc server
 app = Flask(__name__)
@@ -136,14 +137,13 @@ def register():
     resp = requests.post(url, json=obj)
     if resp.status_code != 200:
         print(resp)
-        return resp.content
+        raise Exception
 
     # Wait for the onboarding flow to complete
     # Then pass back the ciphertext
     while True:
         block = int(latest())
-        cmd = f'cast logs --from-block={block-10} --to-block={block+10} --address {CONTRACT} -j "Onboarded(address indexed, bytes16, bytes32, bytes)" {addr} '
-        #print(cmd)
+        cmd = f'cast logs --from-block={block-10} --to-block={block+10} --address {CONTRACT} -j "Onboarded(address indexed, bytes16, bytes32, bytes)" {addr}'
         out = subprocess.check_output(cmd, shell=True)
         obj = json.loads(out)
         if obj:
@@ -165,6 +165,10 @@ def get_key():
 @app.errorhandler(404)
 def not_found(e):
     return "Not Found", 404
+
+from threading import Thread
+t = Thread(target=onboarder_thread)
+t.start()
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8000)
