@@ -11,7 +11,7 @@ if [ ! -f "./ubuntu_vm.step1.img" ]; then
     qemu-img convert -f qcow2 ./ubuntu-minimal.img -O qcow2 ./ubuntu_vm.step1.img
     virt-customize -a ./ubuntu_vm.step1.img \
       --update \
-      --install cryptsetup,wget,python3-pip,isc-dhcp-client \
+      --install cryptsetup,wget,python3-pip,isc-dhcp-client,dumpasn1 \
       --install pipx,python3-nacl,python3-flask,python3-requests \
       --run-command 'pip install environs eth_account --break-system-packages'
 fi

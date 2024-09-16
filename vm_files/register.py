@@ -47,22 +47,6 @@ def is_bootstrapped():
     cmd = f"cast call {CONTRACT} 'xPub()'"
     out = subprocess.check_output(cmd, shell=True).decode('utf-8')
     return out.strip() != "0x"+"0"*64
-
-def extract_fmspc(chain):
-    d = base64.b64decode(chain).decode('utf-8')
-    first = d.split('-----END CERTIFICATE-----')[0] +\
-        '-----END CERTIFICATE-----'
-    out = subprocess.check_output('openssl x509 -outform DER -out tmp.der', input=first.encode('utf-8'), shell=True)
-    proc = subprocess.Popen('dumpasn1 tmp.der', stdin=None, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, text=True)
-    for line in proc.stdout:
-        if "OBJECT IDENTIFIER '1 2 840 113741 1 13 1 4'" in line:
-            octet_line = next(proc.stdout)
-            # Extract hex bytes using regex
-            match = re.search(r'OCTET STRING\s+([A-F0-9 ]+)', octet_line)
-            if match:
-                hex_value = match.group(1).replace(' ', '')
-                break
-    return hex_value
             
 # Register, or bootstrap if this is the first time
 if is_bootstrapped():
