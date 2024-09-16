@@ -1,8 +1,15 @@
 # Dstack mock env VM
 
+This is a lot like Sirrah, but with some key differences.
+
+- Verification of quotes is now off-chain to reduce gas. The bootstrap quote is part of the audit surface, just like contract constructors.
+- Works with Sepolia, no special testnet required
+- Mock environment is much lower level.
+- Better automation. There's a public test network and you can join your node to it.
+
 ## Building the VM image
 
-It's not necessary to have TDX, since this image is meant to be easy to run in a environment. Instead it's just necessary to install qemu and libvirt.
+It's not necessary to have TDX to play along, since this image is meant to be easy to run in a environment. Instead it's just necessary to install qemu and libvirt.
 
 ```bash
 apt-get install qemu qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager dumpasn1
@@ -25,6 +32,12 @@ To kick off the build process, run
 ```
 
 It's convenient when developing to take a copy of the image after `apt get update`. For this you can have a look at `build_vm_dev.sh`. It's necessary to `rm ubuntu_vm.step1.img` to make it rebuild the intermediate snapshot.
+
+### Auditability of builds
+
+TODO:
+- we could store our own repo mirror of the packages we installed, along with their signatures from package maintainers or evidence of how widely they were distributed
+- we could use virt-diff to enumerate the differences in images
 
 ## Running the node and join the test instance
 
@@ -109,3 +122,6 @@ Since the blobs are too expensive to send entire quotes, we're just running a se
 
 Ideally we can provide a few alternatives here. The enclave doesn't really care how the host provides it.
 
+### Contract
+
+Contract address (Sepolia): [0x435d16671575372cae5228029a1a9857e9482849)](https://sepolia.etherscan.io/address/0x435d16671575372cae5228029a1a9857e9482849)
