@@ -132,6 +132,8 @@ def register():
 
     # Send the register transaction
     cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'register(address,bytes)' {addr} 0x{sig}"
+    print(cmd)
+    subprocess.check_output(cmd, shell=True)
 
     # After landing, notify the pubsub
     obj = dict(addr=addr,pubk=pubk,quote=quote)
