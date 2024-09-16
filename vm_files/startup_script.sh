@@ -3,9 +3,8 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Redirect all output to a log file for debugging
-# exec > /var/log/startup_script.log 2> >(systemd-cat -t Dstack-Replicator)
-exec > /var/log/startup_script.log 2>&1
+# For redirecting logging earlier
+# exec > /var/log/startup_script.log 2>&1
 
 # Setup the network
 dhclient ens3
@@ -24,6 +23,9 @@ mkdir -p "$MOUNT_POINT"
 if ! mountpoint -q /mnt/host_volume; then
     mount -t 9p -o trans=virtio,version=9p2000.L host_volume /mnt/host_volume
 fi
+
+# Redirect all output to mounted log file for debugging
+exec > /mnt/host_volume/startup_script.log 2>&1
 
 # Run the Register Script
 XPRIV=$(python3 /root/register.py)

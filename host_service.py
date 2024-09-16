@@ -23,9 +23,6 @@ GUEST_SERVICE  = env('GUEST_SERVICE')
 CONTRACT = env('CONTRACT')
 env.seal()
 
-# More configuration (not necessarily private)
-
-
 # Set the cast env variables
 os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
 os.environ['CHAIN-ID'] = '11155111'
@@ -176,4 +173,4 @@ t = Thread(target=onboarder_thread)
 t.start()
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8000)
+    app.run(host='127.0.0.1', port=8000, threaded=True)
