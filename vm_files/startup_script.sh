@@ -32,7 +32,7 @@ echo "Dstack node onboarded. Enclave has the key..."
 # Check if the encrypted container exists; create it if not
 if [ ! -f "$CONTAINER_PATH" ]; then
     echo "Encrypted container not found. Creating a new one."
-    dd if=/dev/zero of="$CONTAINER_PATH" bs=1M count=120  # 120MB container; adjust size as needed
+    dd if=/dev/zero of="$CONTAINER_PATH" bs=1M count=140  # 140MB container; adjust size as needed
     echo ${XPRIV} | cryptsetup luksFormat "$CONTAINER_PATH" --key-file -
 fi
 
