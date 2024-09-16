@@ -59,6 +59,12 @@ def extract_fmspc(chain):
 def onboarder_thread():
     # Subscribe to events requesting onboarding
     while True:
+        # Check to see if the enclave is online
+        try: requests.get(f"{GUEST_SERVICE}/")
+        except:
+            time.sleep(4)
+            continue
+
         url = f'{PUBSUB_URL}/subscribe'
         response = requests.get(url, stream=True)
         for line in response.iter_lines():
@@ -93,16 +99,11 @@ def onboarder_thread():
 
             # Pass the quote to the enclave
             # It will return a signature and ciphertext
-            try: 
-                resp = requests.post(f"{GUEST_SERVICE}/onboard", data=dict(
-                    addr=addr,
-                    quote=quote,
-                    pubk=pubk,
-                ))
-            except requests.exceptions.ConnectionError:
-                print("Can't help yet")
-                continue
-
+            resp = requests.post(f"{GUEST_SERVICE}/onboard", data=dict(
+                addr=addr,
+                quote=quote,
+                pubk=pubk,
+            ))
             obj = resp.json()
             sig = obj['sig']
             enc_message = obj['ciph']
@@ -110,8 +111,8 @@ def onboarder_thread():
             # Go ahead and cast send the resulting sig
             cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'onboard(address, bytes16, bytes32, bytes, bytes)' {addr} 0x{FMSPC}00000000000000000000 0x{mrtd_hash} 0x{enc_message} 0x{sig}"
             out = subprocess.check_output(cmd, shell=True).decode('utf-8')
-
-        time.sleep(4)
+        else:
+            time.sleep(4)
 
 # Start the rpc server
 app = Flask(__name__)
@@ -132,6 +133,10 @@ def register():
     quote = request.form['quote']
     open('register_quote.hex','w').write(quote)
 
+    # Send the register transaction
+    cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'register(address,bytes)' {addr} 0x{sig}"
+
+    # After landing, notify the pubsub
     obj = dict(addr=addr,pubk=pubk,quote=quote)
     url = f"{PUBSUB_URL}/push"
     resp = requests.post(url, json=obj)
