@@ -65,7 +65,9 @@ def onboarder_thread():
         url = f'{PUBSUB_URL}/subscribe'
         response = requests.get(url, stream=True)
         for line in response.iter_lines():
-            o = json.loads(line.strip())['data']
+            o = json.loads(line.strip())
+            if not o: continue
+            o = o['data']
             
             print('Onboarding request observed')
             print('pubk:', o['pubk'])

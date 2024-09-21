@@ -62,12 +62,12 @@ def event_stream(q):
     """Generator function for SSE."""
     try:
         while True:
-            data = q.get()
-            # Serialize the data as JSON
-            json_data = json.dumps({"data": data})
-            yield f'{json_data}\n'
+            try:
+                data = q.get(timeout=30)
+                yield json.dumps({"data": data}) + '\n'
+            except queue.Empty:
+                yield json.dumps("") + '\n'
     except GeneratorExit:
-        # Client disconnected
         with subscribers_lock:
             subscribers.remove(q)
 
