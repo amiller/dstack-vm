@@ -27,6 +27,8 @@ env.seal()
 os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
 os.environ['CHAIN-ID'] = '11155111'
 
+subprocess.check_output('dumpasn1 --version', shell=True)
+
 # Cast utilities
 def latest():
     cmd = "cast block-number"
@@ -57,10 +59,12 @@ def onboarder_thread():
     # Subscribe to events requesting onboarding
     while True:
         # Check to see if the enclave is online
+        print('pinging guest')
         try: requests.get(f"{GUEST_SERVICE}/")
         except:
             time.sleep(4)
             continue
+        print('guest found')
 
         url = f'{PUBSUB_URL}/subscribe'
         response = requests.get(url, stream=True)
@@ -122,6 +126,7 @@ def bootstrap():
     quote = request.form['quote']
     open('bootstrap_quote.hex','w').write(quote)    
     cmd = f"cast send --private-key={PRIVKEY} {CONTRACT} 'bootstrap(address)' {addr}"
+    print(cmd)
     return subprocess.check_output(cmd, shell=True).decode('utf-8')
 
 @app.route('/register', methods=['POST'])
@@ -162,11 +167,6 @@ def register():
     data = bytes.fromhex(obj[0]['data'][2:])
     _,_,ciph = eth_abi.decode(['bytes16','bytes32','bytes'], data)
     return ciph, 200
-
-
-@app.route('/key', methods=['GET'])
-def get_key():
-    return jsonify({"seed": FIXED_SEED}), 200
 
 @app.errorhandler(404)
 def not_found(e):

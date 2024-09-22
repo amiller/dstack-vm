@@ -30,7 +30,7 @@ os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
 os.environ['CHAIN-ID'] = '11155111'
 
 # The global master key, passed from env
-xPriv = os.environ['XPRIV'].encode('utf-8')
+xPriv = bytes.fromhex(os.environ['XPRIV'])
 
 # Cast utilities
 def latest():
