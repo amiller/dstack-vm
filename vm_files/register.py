@@ -91,7 +91,7 @@ if is_bootstrapped():
     # Decrypt the message using the private key
     unseal_box = SealedBox(private_key)
     decrypted_message = unseal_box.decrypt(encrypted_message)
-    xPriv = decrypted_message.decode()
+    xPriv = bytes(decrypted_message)
 
 else:
     print('Not bootstrapped', file=sys.stderr)
@@ -108,12 +108,11 @@ else:
     open('/mnt/host_volume/bootstrap_quote.quote','w').write(quote)
     
     # Ask the host service to post the tx, return when done
-    if 0:
-        resp = requests.post(f"{HOST_SERVICE}/bootstrap", data=dict(
-            addr=addr,
-            quote=quote))
-        if resp.status_code != 200:
-            print(resp, file=sys.stderr)
-            raise Exception
+    resp = requests.post(f"{HOST_SERVICE}/bootstrap", data=dict(
+        addr=addr,
+        quote=quote))
+    if resp.status_code != 200:
+        print(resp, file=sys.stderr)
+        raise Exception
 
-print(xPriv)
+print(xPriv.hex())
