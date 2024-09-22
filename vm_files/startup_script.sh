@@ -64,7 +64,7 @@ fi
 
 # Run the Python script
 pushd /root/
-XPRIV=${XPRIV} python3 guest_service.py &
+XPRIV=${XPRIV} waitress-serve --port=4001 guest_service:app &
 GSRV=$!
 sleep 1
 python3 app.py

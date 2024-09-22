@@ -13,7 +13,7 @@ if [ ! -f "./ubuntu_vm.step1.img" ]; then
       --update \
       --install cryptsetup,wget,python3-pip,isc-dhcp-client,dumpasn1 \
       --install pipx,python3-nacl,python3-flask,python3-requests \
-      --run-command 'pip install environs eth_account --break-system-packages'
+      --run-command 'pip install environs eth_account waitress --break-system-packages'
 fi
 
 # Step 2
