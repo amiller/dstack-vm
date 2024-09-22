@@ -59,12 +59,10 @@ def onboarder_thread():
     # Subscribe to events requesting onboarding
     while True:
         # Check to see if the enclave is online
-        print('pinging guest')
         try: requests.get(f"{GUEST_SERVICE}/")
         except:
             time.sleep(4)
             continue
-        print('guest found')
 
         url = f'{PUBSUB_URL}/subscribe'
         response = requests.get(url, stream=True)

@@ -109,6 +109,23 @@ def onboard():
     print(sig, type(sig), encrypted_message)
     return jsonify(dict(sig=sig.hex(), ciph=encrypted_message)), 200
 
+##############################
+# Dstack cooperative interface
+##############################
+
+# Called by other trusted modules to get a derived key
+@app.route('/getkey/<tag>', methods=['GET'])
+def getkey(tag):
+    h = hashlib.blake2b(tag.encode('utf-8'), key=xPriv, digest_size=32)
+    return h.hexdigest()
+
+# Called by other trusted modules to do remote attestation
+@app.route('/attest/<tag>/<appdata>', methods=['GET'])
+def attest(tag):
+    #h = hashlib.blake2b(tag.encode('utf-8'), key=xPriv, digest_size=32)
+    #return h.hexdigest()
+    return NotImplemented
+
 @app.errorhandler(404)
 def not_found(e):
     return "Not Found", 404

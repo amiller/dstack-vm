@@ -66,5 +66,6 @@ fi
 pushd /root/
 XPRIV=${XPRIV} python3 guest_service.py &
 GSRV=$!
+sleep 1
 python3 app.py
 wait $GSRV
