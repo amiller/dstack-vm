@@ -29,5 +29,6 @@ if true; then
     --copy-in vm_files/guest_service.py:/root \
     --copy-in vm_files/register.py:/root \
     --copy-in vm_files/app.py:/root \
+    --copy-in vm_files/unstoppable_tls.py:/root \
     --root-password password:
 fi

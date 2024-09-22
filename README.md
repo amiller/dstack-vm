@@ -72,7 +72,7 @@ We are looking forward to moving to on-chain PCCS. But for now we still have to 
 
 In one last background terminal do this:
 ```bash
-git clone https://github.com/ruteri/dummy-tdx-dcap
+git submodule update --init --recursive
 cd dummy-tdx-dcap
 make build-httpserver
 go run cmd/httpserver/main.go
