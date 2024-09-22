@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm host_volume/startup_script.log
+
 # Create a new tmux session
 tmux new-session -d -s demo
 
