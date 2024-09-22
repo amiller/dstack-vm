@@ -1,6 +1,7 @@
 import json
 import sys
 import requests
+import subprocess
 
 CERTIFICATE_PATH = "host_volume/certificate.pem"
 DOMAIN = "dstack-mockup.ln.soc1024.com"
@@ -14,6 +15,9 @@ def fetch_latest_cert(domain):
     cert_pem = requests.get(f"https://crt.sh/?d={cert_data['id']}").text
     open(CERTIFICATE_PATH,'w').write(cert_pem)
     print('wrote', CERTIFICATE_PATH)
+
+    cmd = f"""curl -s "$(openssl x509 -in {CERTIFICATE_PATH} -noout -text | grep 'CA Issuers - URI:' | sed 's/.*URI://')" | openssl x509 -inform DER -outform PEM > intermediate.pem && cat intermediate.pem >> {CERTIFICATE_PATH}"""
+    subprocess.check_output(cmd, shell=True)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
