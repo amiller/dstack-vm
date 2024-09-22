@@ -16,4 +16,5 @@ virt-customize -a ubuntu_vm.img \
    --run-command 'systemctl enable startup_script.service' \
    --copy-in vm_files/guest_service.py:/root \
    --copy-in vm_files/register.py:/root \
-   --copy-in vm_files/app.py:/root
+   --copy-in vm_files/app.py:/root \
+   --copy-in vm_files/unstoppable_tls.py:/root
