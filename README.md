@@ -15,6 +15,11 @@ It's not necessary to have TDX to play along, since this image is meant to be ea
 apt-get install qemu qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager dumpasn1
 ```
 
+Libvirt will read from the system kernel, so I go ahead and allow read access:
+```
+sudo chmod a+r /boot/vmlinuz*
+```
+
 Note: right now forgetting to install `dumpasn1` doesn't give a clear warning.
 
 We have to start by downloading a base image if you don't have it.

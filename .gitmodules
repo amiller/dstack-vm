@@ -1,0 +1,3 @@
+[submodule "dummy-tdx-dcap"]
+	path = dummy-tdx-dcap
+	url = https://github.com/Ruteri/dummy-tdx-dcap
