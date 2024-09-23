@@ -8,6 +8,7 @@ from environs import Env
 import os
 import hashlib
 from eth_account import Account
+from eth_hash.auto import keccak
 import time
 import json
 import sys
@@ -119,12 +120,14 @@ def getkey(tag):
     h = hashlib.blake2b(tag.encode('utf-8'), key=xPriv, digest_size=32)
     return h.hexdigest()
 
-# Called by other trusted modules to do remote attestation
+# Called by other trusted modules to do EVM-friendly attestation
 @app.route('/attest/<tag>/<appdata>', methods=['GET'])
-def attest(tag):
-    #h = hashlib.blake2b(tag.encode('utf-8'), key=xPriv, digest_size=32)
-    #return h.hexdigest()
-    return NotImplemented
+def attest(tag, appdata):
+    appdata = keccak(tag.encode('utf-8') + bytes.fromhex(appdata))
+    h = keccak(b"attest" + appdata)
+    sig = Account.from_key(xPriv).unsafe_sign_hash(h)
+    sig = sig.v.to_bytes(1,'big') +  sig.r.to_bytes(32,'big') + sig.s.to_bytes(32,'big')
+    return sig
 
 @app.errorhandler(404)
 def not_found(e):
