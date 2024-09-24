@@ -22,16 +22,10 @@ mount -t 9p -o trans=virtio,version=9p2000.L host_volume /mnt/host_volume
 # Redirect all output to mounted log file for debugging
 exec > /mnt/host_volume/startup_script.log 2>&1
 
-# Start loading the podman image
-podman load -i /mnt/host_volume/app-example.tar &
-PID_PODMAN_LOAD=$!
-
-# Mount the container_image
-# mkdir -p /mnt/container_images
-# mount -t 9p -o trans=virtio,version=9p2000.L container_images /var/lib/containers/storage
-
-# Run the Register Script
-XPRIV=$(python3 /root/register.py)
+############################
+# Run the Replicatoor script
+############################
+XPRIV=$(python3 /root/replicatoor.py)
 echo "Dstack node onboarded. Enclave has the key..."
 
 # Check if the encrypted container exists; create it if not
@@ -66,11 +60,20 @@ else
     exit 1
 fi
 
+#########################
 # Run the Guest services
+#########################
+# This is used by the host to ask for onboarding,
+# and by the other applications to provide attestation
+# and derived keys
 pushd /root/
 XPRIV=${XPRIV} waitress-serve --port=80 guest_service:app &
 GSRV=$!
 sleep 1
+
+#########################
+# Unstoppable TLS Domains
+#########################
 
 # Make sure to get the certificate before proceeding
 python3 unstoppable_tls.py
@@ -78,10 +81,12 @@ python3 unstoppable_tls.py
 # Run the reverse proxy
 nginx
 
-# Wait for the image to be loaded, then go
-wait $PID_PODMAN_LOAD
-podman run --add-host=dstack-guest:10.88.0.1 \
-       --ip=10.88.0.2 --rm app-example:latest
+#############
+# Kubernethes
+#############
+
+export PYTHONUNBUFFERED=1
+python3 kubernethes.py
 
 # If the app concludes, still keep the guest around
 wait $GSRV

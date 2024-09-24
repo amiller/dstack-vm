@@ -1,10 +1,7 @@
-#!/usr/bin/python3
-
 from flask import Flask, jsonify, request
 from nacl.public import PrivateKey, SealedBox, PublicKey
 import subprocess
 import requests
-from environs import Env
 import os
 import hashlib
 from eth_account import Account
@@ -14,21 +11,20 @@ import json
 import sys
 import base64
 import re
+from dotenv import dotenv_values
 
 # Untrusted values read from host
-env = Env()
-env.read_env('/mnt/host_volume/guest.env')
-ETH_API_KEY = env('ETH_API_KEY')
-HOST_ADDR   = env('HOST_ADDR')
-MOCK_VERIFY_URL   = env('MOCK_VERIFY_URL')
-env.seal()
+env = dotenv_values('/mnt/host_volume/guest.env')
+ETH_API_KEY     = env['ETH_API_KEY']
+HOST_ADDR       = env['HOST_ADDR']
+MOCK_VERIFY_URL = env['MOCK_VERIFY_URL']
 
-# Fixed configuration values forming part of the TCB
-CONTRACT="0x435d16671575372CAe5228029A1a9857e9482849"
-
-# Set the cast env variables
-os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
-os.environ['CHAIN-ID'] = '11155111'
+# Trusted values read from image
+trusted = dotenv_values('/root/trusted.env')
+CONTRACT     = trusted['CONTRACT']
+HOST_SERVICE = trusted['HOST_SERVICE']
+os.environ['ETH_RPC_URL'] = trusted['ETH_RPC_URL'] + ETH_API_KEY
+os.environ['CHAIN-ID']    = trusted['CHAIN_ID']
 
 # The global master key, passed from env
 xPriv = bytes.fromhex(os.environ['XPRIV'])

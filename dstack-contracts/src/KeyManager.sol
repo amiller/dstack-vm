@@ -35,10 +35,22 @@ contract KeyManager {
     function verify(bytes32 appData, bytes memory sig) public view returns (bool) {
         bytes32 digest = keccak256(abi.encodePacked("attest", appData));
         return Secp256k1.verify(xPub, digest, sig);
+    }
+
+    ///////////////
+    // KubernEthes
+    ///////////////
+
+    string public container;
+    event ContainerChanged(string container);
+    function set_container(string memory _container) public {
+	require(msg.sender == owner);
+	container = _container;
+	emit ContainerChanged(container);
     }    
 
     //////////////////////////////
-    // Bootstrapping
+    // Replicatoor Bootstrapping
     //////////////////////////////
     /*
       The bootstrap phase is called by the owner, just once,
@@ -55,9 +67,11 @@ contract KeyManager {
 	emit BootstrapComplete(xPub);
     }
 
+    //////////////////////////////    
+    // Replicatoor register phase
     //////////////////////////////
-    // New node register phase
-    //////////////////////////////
+    
+    // TODO: Replace this with On-Chain PCCS
 
     struct TcbInfo {
 	bytes16 fmspc;
@@ -84,9 +98,9 @@ contract KeyManager {
 	emit Requested(addr);
     }
 
-    ////////////////
-    // Help onboard
-    ////////////////
+    //////////////////////
+    // Replicatoor onboard
+    //////////////////////
 
     function onboard_appdata(address addr, bytes16 fmspc, bytes32 mrtd, bytes memory ciph)
     public pure returns(bytes32) {
