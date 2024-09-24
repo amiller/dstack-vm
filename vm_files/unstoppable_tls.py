@@ -18,7 +18,7 @@ KEY_PATH = "/mnt/encrypted_data/privatekey.pem"
 
 def get_private_key():
     # Fetch a deterministic 32-byte key from the pseudorandom service
-    key = bytes.fromhex(requests.get('http://localhost:4001/getkey/unstoppable_tls').text)
+    key = bytes.fromhex(requests.get('http://localhost/getkey/unstoppable_tls').text)
     private_key = ec.derive_private_key(int.from_bytes(key), ec.SECP256R1())
     return private_key
 
@@ -42,7 +42,7 @@ def give_me_the_keys():
     print('pubkey:', public_bytes.hex())
     tag = 'unstoppable_tls'
     app_data = public_bytes.hex()
-    url = f"http://localhost:4001/attest/{tag}/{app_data}"
+    url = f"http://localhost/attest/{tag}/{app_data}"
     resp = requests.get(url)
     sig = resp.content
     print('sig:', sig.hex())

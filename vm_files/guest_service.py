@@ -121,6 +121,11 @@ def getkey(tag):
     return h.hexdigest()
 
 # Called by other trusted modules to do EVM-friendly attestation
+@app.route('/appdata/<tag>/<appdata>', methods=['GET'])
+def get_appdata(tag, appdata):
+    appdata = keccak(tag.encode('utf-8') + bytes.fromhex(appdata))
+    return appdata
+
 @app.route('/attest/<tag>/<appdata>', methods=['GET'])
 def attest(tag, appdata):
     appdata = keccak(tag.encode('utf-8') + bytes.fromhex(appdata))

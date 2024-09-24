@@ -68,7 +68,7 @@ fi
 
 # Run the Guest services
 pushd /root/
-XPRIV=${XPRIV} waitress-serve --port=4001 guest_service:app &
+XPRIV=${XPRIV} waitress-serve --port=80 guest_service:app &
 GSRV=$!
 sleep 1
 
@@ -80,7 +80,8 @@ nginx
 
 # Wait for the image to be loaded, then go
 wait $PID_PODMAN_LOAD
-podman run --ip=10.88.0.2 --rm app-example:latest
+podman run --add-host=dstack-guest:10.88.0.1 \
+       --ip=10.88.0.2 --rm app-example:latest
 
 # If the app concludes, still keep the guest around
 wait $GSRV
