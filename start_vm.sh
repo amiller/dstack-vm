@@ -11,7 +11,7 @@ qemu-system-x86_64 \
     -smp 2 \
     -hda ./ubuntu_vm_overlay.img \
     -net nic,model=virtio \
-    -net user,hostfwd=tcp::4001-:4001,hostfwd=::4002-:4002 \
+    -net user,hostfwd=tcp::4001-:4001,hostfwd=::4002-:443 \
     -fsdev local,id=host_vol,path=./host_volume,security_model=none \
     -device virtio-9p-pci,fsdev=host_vol,mount_tag=host_volume \
     -nographic

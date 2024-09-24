@@ -15,17 +15,20 @@ MOUNT_POINT="/mnt/encrypted_data"
 LOOP_DEVICE=$(losetup -f)  # Automatically find the next available loop device
 DECRYPTED_NAME="encrypted_volume"
 
-# Create mount points
-mkdir -p /mnt/host_volume
-mkdir -p "$MOUNT_POINT"
-
 # Mount the host directory via 9p
-if ! mountpoint -q /mnt/host_volume; then
-    mount -t 9p -o trans=virtio,version=9p2000.L host_volume /mnt/host_volume
-fi
+mkdir -p /mnt/host_volume
+mount -t 9p -o trans=virtio,version=9p2000.L host_volume /mnt/host_volume
 
 # Redirect all output to mounted log file for debugging
 exec > /mnt/host_volume/startup_script.log 2>&1
+
+# Start loading the podman image
+podman load -i /mnt/host_volume/app-example.tar &
+PID_PODMAN_LOAD=$!
+
+# Mount the container_image
+# mkdir -p /mnt/container_images
+# mount -t 9p -o trans=virtio,version=9p2000.L container_images /var/lib/containers/storage
 
 # Run the Register Script
 XPRIV=$(python3 /root/register.py)
@@ -52,6 +55,7 @@ if [ -z "$(blkid -o value -s TYPE /dev/mapper/$DECRYPTED_NAME)" ]; then
 fi
 
 # Mount the decrypted filesystem
+mkdir -p "$MOUNT_POINT"
 mount /dev/mapper/"$DECRYPTED_NAME" "$MOUNT_POINT"
 
 # Verify the mount
@@ -62,10 +66,21 @@ else
     exit 1
 fi
 
-# Run the Python script
+# Run the Guest services
 pushd /root/
 XPRIV=${XPRIV} waitress-serve --port=4001 guest_service:app &
 GSRV=$!
 sleep 1
-python3 app.py
+
+# Make sure to get the certificate before proceeding
+python3 unstoppable_tls.py
+
+# Run the reverse proxy
+nginx
+
+# Wait for the image to be loaded, then go
+wait $PID_PODMAN_LOAD
+podman run --ip=10.88.0.2 --rm app-example:latest
+
+# If the app concludes, still keep the guest around
 wait $GSRV
