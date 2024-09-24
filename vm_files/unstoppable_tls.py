@@ -14,10 +14,11 @@ import tempfile
 DOMAIN_NAME = "dstack-mockup.ln.soc1024.com"
 CSR_PATH = "/mnt/host_volume/request.csr"
 CERTIFICATE_PATH = "/mnt/host_volume/certificate.pem"
+KEY_PATH = "/mnt/encrypted_data/privatekey.pem"
 
 def get_private_key():
     # Fetch a deterministic 32-byte key from the pseudorandom service
-    key = bytes.fromhex(requests.get('http://localhost:4001/getkey/unstoppable_tls').text)
+    key = bytes.fromhex(requests.get('http://localhost/getkey/unstoppable_tls').text)
     private_key = ec.derive_private_key(int.from_bytes(key), ec.SECP256R1())
     return private_key
 
@@ -41,7 +42,7 @@ def give_me_the_keys():
     print('pubkey:', public_bytes.hex())
     tag = 'unstoppable_tls'
     app_data = public_bytes.hex()
-    url = f"http://localhost:4001/attest/{tag}/{app_data}"
+    url = f"http://localhost/attest/{tag}/{app_data}"
     resp = requests.get(url)
     sig = resp.content
     print('sig:', sig.hex())
@@ -57,14 +58,14 @@ def give_me_the_keys():
     print()
     time.sleep(0.1)
 
-    # Write the private key to temp dir
-    fp = tempfile.NamedTemporaryFile(delete=False)
+    # Write the private key
     pem_key = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption(),
     )
-    fp.write(pem_key)
-    fp.close()
+    open(KEY_PATH,'wb').write(pem_key)
+    print('wrote:', KEY_PATH, CERTIFICATE_PATH)
 
-    return fp.name, CERTIFICATE_PATH
+if __name__ == '__main__':
+    give_me_the_keys()
