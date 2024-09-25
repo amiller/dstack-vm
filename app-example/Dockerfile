@@ -38,5 +38,7 @@ RUN \
 WORKDIR /app/
 
 COPY ./app.py ./
+COPY ./templates/index.html ./templates/
+COPY ./static/comp.png ./static/dstack.png ./static/
 
 CMD ["python", "./app.py"]
