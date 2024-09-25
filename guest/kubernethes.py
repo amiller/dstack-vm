@@ -35,6 +35,7 @@ def load_image(archive_path):
 
 def restart_container(new_image):    
     subprocess.run("podman stop mycontainer", shell=True)
+    subprocess.run("kill -9 $(podman container inspect mycontainer -f '{{.State.Pid}}')", shell=True)
     subprocess.run("podman rm -f mycontainer", shell=True)
     cmd = "podman run -d --replace --name mycontainer \
        --hostname myapp.hostname \
