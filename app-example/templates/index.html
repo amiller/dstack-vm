@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dstack App</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+
+	/* Break code */
+	code {
+	    display: block;
+	    white-space: pre-wrap;
+	    word-wrap: break-word;
+	    max-width: 500px;
+	}
+
+        /* Container to hold and center both the heading and the div */
+        .container {
+            text-align: center;
+        }
+	
+        /* The fixed 500x500px div */
+        .vortex-container {
+            width: 500px;
+            height: 500px;
+            position: relative;
+            background: url('static/dstack.png') no-repeat center center;
+            background-size: cover;
+            overflow: hidden;
+        }
+
+        /* Orbit container for swirling images */
+        .orbit {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: spin 20s infinite linear;
+        }
+
+        /* Image settings */
+        .orbit img {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+        }
+
+        /* Animation for spinning effect */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Positions of the six images around the vortex */
+        .image1 { transform: rotate(0deg) translate(150px) rotate(10deg); }
+        .image2 { transform: rotate(60deg) translate(150px) rotate(-80deg); }
+        .image3 { transform: rotate(120deg) translate(150px) rotate(-20deg); }
+        .image4 { transform: rotate(180deg) translate(150px) rotate(-160deg); }
+        .image5 { transform: rotate(240deg) translate(150px) rotate(-20deg); }
+        .image6 { transform: rotate(300deg) translate(150px) rotate(-240deg); }
+
+    </style>
+</head>
+<body>
+
+  <div class="container">
+  <h3>Welcome to Dstack with Unstoppable TLS</h3>
+  <p>Appdata: <code>0x{{ appdata }}</code></p>
+  <p>Signature: <code>0x{{ att }}</code></p>
+    <div class="vortex-container">
+        <div class="orbit">
+            <img src="static/comp.png" class="image1">
+            <img src="static/comp.png" class="image2">
+            <img src="static/comp.png" class="image3">
+            <img src="static/comp.png" class="image4">
+            <img src="static/comp.png" class="image5">
+            <img src="static/comp.png" class="image6">
+        </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 # Sample application
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 import requests
 import sys
 
@@ -18,9 +18,9 @@ def home():
     # Helper for on-chain verification
     appdata = requests.get("http://dstack-guest/appdata/s/" + s.hex())
     
-    return f"""<pre>{s.decode('utf-8')} \n
-    appdata: 0x{appdata.content.hex()} \n
-    signature: {att.content.hex()}</pre>"""
+    return render_template('index.html',
+                           appdata=appdata.content.hex(),
+                           att=att.content.hex())
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80)
