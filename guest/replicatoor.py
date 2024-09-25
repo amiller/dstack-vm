@@ -1,9 +1,7 @@
-from dotenv import dotenv_values
 from flask import Flask, jsonify, request
 from nacl.public import PrivateKey, SealedBox, PublicKey
 import subprocess
 import requests
-from dotenv import dotenv_values
 import os
 import hashlib
 from eth_account import Account
@@ -15,13 +13,15 @@ import base64
 import re
 
 # Untrusted values read from host
-env = dotenv_values('/mnt/host_volume/guest.env')
+dotenv = lambda f: dict(line.strip().split('=', 1) for line in open(f) if line.strip() and not line.startswith('#'))
+
+env = dotenv('/mnt/host_volume/guest.env')
 ETH_API_KEY     = env['ETH_API_KEY']
 HOST_ADDR       = env['HOST_ADDR']
 MOCK_VERIFY_URL = env['MOCK_VERIFY_URL']
 
 # Trusted values read from image
-trusted = dotenv_values('/root/trusted.env')
+trusted = dotenv('/root/trusted.env')
 CONTRACT     = trusted['CONTRACT']
 HOST_SERVICE = trusted['HOST_SERVICE']
 os.environ['ETH_RPC_URL'] = trusted['ETH_RPC_URL'] + ETH_API_KEY
@@ -94,6 +94,7 @@ else:
 
     # Generate the random key
     xPriv = os.urandom(32)
+    addr = Account.from_key(xPriv).address
 
     # Get the quote
     appdata = hashlib.sha256(b"boostrap:" + addr.encode('utf-8')).hexdigest()

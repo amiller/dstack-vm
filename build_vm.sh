@@ -7,7 +7,7 @@ virt-customize -a ubuntu_vm.img \
    --install cryptsetup,wget,python3-pip,isc-dhcp-client,dumpasn1,podman \
    --install pipx,python3-nacl,python3-flask,python3-requests,nginx \
    --run-command 'apt-get clean' \
-   --run-command 'pip install environs eth_account waitress --break-system-packages' \
+   --run-command 'pip install eth_account waitress --break-system-packages' \
    --copy-in foundry_nightly_linux_amd64.tar.gz:/root \
    --run-command 'tar -xzf /root/foundry_nightly_linux_amd64.tar.gz -C /usr/local/bin' \
    --copy-in guest/nginx.conf:/etc/nginx/ \

@@ -129,7 +129,7 @@ Ideally we can provide a few alternatives here. The enclave doesn't really care 
 
 ### Contract
 
-Contract address (Sepolia): [0x435d16671575372cae5228029a1a9857e9482849)](https://sepolia.etherscan.io/address/0x435d16671575372cae5228029a1a9857e9482849)
+Contract address (Sepolia): [0x262eE8243e568Ae38af2C3BCBb8d526bBBA14485)](https://sepolia.etherscan.io/address/0x262eE8243e568Ae38af2C3BCBb8d526bBBA14485)
 
 ## Building and running a container
 
