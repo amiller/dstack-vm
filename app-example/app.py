@@ -18,9 +18,9 @@ def home():
     # Helper for on-chain verification
     appdata = requests.get("http://dstack-guest/appdata/s/" + s.hex())
     
-    return f"""{s.decode('utf-8')} \n
+    return f"""<pre>{s.decode('utf-8')} \n
     appdata: 0x{appdata.content.hex()} \n
-    signature: {att.content.hex()}"""
+    signature: {att.content.hex()}</pre>"""
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80)

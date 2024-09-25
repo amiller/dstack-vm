@@ -36,7 +36,7 @@ def load_image(archive_path):
 def restart_container(new_image):    
     subprocess.run("podman stop mycontainer", shell=True)
     subprocess.run("podman rm -f mycontainer", shell=True)
-    cmd = "podman run -d --name mycontainer \
+    cmd = "podman run -d --replace --name mycontainer \
        --hostname myapp.hostname \
        --add-host=dstack-guest:10.88.0.1 \
        --ip=10.88.0.2 --rm " + new_image
