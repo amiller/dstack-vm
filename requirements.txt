@@ -1,5 +1,4 @@
-environs
 flask
 waitress
 eth_abi
-
+eth_account

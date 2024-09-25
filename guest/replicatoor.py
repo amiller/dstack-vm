@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 from nacl.public import PrivateKey, SealedBox, PublicKey
 import subprocess
 import requests
-from environs import Env
 import os
 import hashlib
 from eth_account import Account
@@ -14,20 +13,19 @@ import base64
 import re
 
 # Untrusted values read from host
-env = Env()
-env.read_env('/mnt/host_volume/guest.env')
-ETH_API_KEY = env('ETH_API_KEY')
-HOST_ADDR   = env('HOST_ADDR')
-env.seal()
+dotenv = lambda f: dict(line.strip().split('=', 1) for line in open(f) if line.strip() and not line.startswith('#'))
 
-# Fixed configuration values forming part of the TCB
-CONTRACT="0x435d16671575372CAe5228029A1a9857e9482849"
-HOST_SERVICE="http://10.0.2.2:8000"
-#HOST_SERVICE="http://localhost:8000"
+env = dotenv('/mnt/host_volume/guest.env')
+ETH_API_KEY     = env['ETH_API_KEY']
+HOST_ADDR       = env['HOST_ADDR']
+MOCK_VERIFY_URL = env['MOCK_VERIFY_URL']
 
-# Set the cast env variables
-os.environ['ETH_RPC_URL'] = f"https://sepolia.infura.io/v3/{ETH_API_KEY}"
-os.environ['CHAIN-ID'] = '11155111'
+# Trusted values read from image
+trusted = dotenv('/root/trusted.env')
+CONTRACT     = trusted['CONTRACT']
+HOST_SERVICE = trusted['HOST_SERVICE']
+os.environ['ETH_RPC_URL'] = trusted['ETH_RPC_URL'] + ETH_API_KEY
+os.environ['CHAIN-ID']    = trusted['CHAIN_ID']
 
 # To get a quote
 def get_quote(appdata):
@@ -40,7 +38,6 @@ def get_quote(appdata):
         return subprocess.check_output(cmd, shell=True).decode('utf-8')
 
 # Cast utilities
-
 def is_bootstrapped():
     cmd = f"cast call {CONTRACT} 'xPub()'"
     out = subprocess.check_output(cmd, shell=True).decode('utf-8')
@@ -49,6 +46,7 @@ def is_bootstrapped():
 # Register, or bootstrap if this is the first time
 if is_bootstrapped():
     print('Registering...', file=sys.stderr)
+
     # Generate a private key and a corresponding public key
     private_key = PrivateKey.generate()
     public_key = private_key.public_key
