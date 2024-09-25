@@ -35,7 +35,7 @@ RUN \
     : "Installing python dependencies" && \
     pip install --break-system-packages eth_account eth_abi flask requests 
 
-WORKDIR /app
+WORKDIR /app/
 
 COPY ./app.py ./
 
