@@ -1,58 +1,61 @@
 # Dstack: speedrunning a p2p Confidential VM
 
-Dstack is a testnet for self-replicating Confidential VMs (CVMs), that coordinate using a public blockchain.
-The smart contract on the blockchain is associated with a shared secret, which is replicated among any participating nodes that register on-chain.
-- Smart Contract [0x435 on Sepolia](https://sepolia.etherscan.io/address/0x435d16671575372cae5228029a1a9857e9482849#readContract)
-
-The sample application serves an unstoppable HTTPs website. Browse to `https://dstack-mockup.ln.soc1024.com` for a demo greeting: 
+Dstack is a minimalist testnet for self-replicating Confidential VMs (CVMs). The [orchestration contract](https://sepolia.etherscan.io/address/0x435d16671575372cae5228029a1a9857e9482849#readContract) lives on Sepolia. The sample application serves an unstoppable HTTPs website. Browse to `https://dstack-mockup.ln.soc1024.com` for a demo greeting: 
 ```
 Welcome to Dstack with unstoppable TLS!
-appdata: 0x3ea1f2a382da749b56cb21c3345bcb1a0edd61f0705fbf0ec986b74efb4b81d1
-signature: 0x1bc8e366dc889fb6ca67d05411c8e528c06e0c5f251c3749bae0d2a5c15f6dd7fe7f266f60301f17efaa4fbdf241a5fc6f6f17e2f9c5151df131e52867eb6f8ae2
 ```
+The total repo size comes in under 1000 lines of code, mainly bash scripts to build and run the VM and python modules to manage the replication and serve the app.
 
-
-Dstack is a flexible environment for apps running on the guest VM:
-- Your app is a plain Docker container archive. It can access:
+Dstack provides a flexible environment for apps running on the guest VM. Your app is a plain Docker container archive (see the greeting app at [./app-example/](./app-example/)).
+Apps can access:
    - Encrypted persistent volume: `/mnt/encrypted_data/`
    - Untrusted host volume: `/mnt/host_volume/`
    - Per-app hardened keys: `http://dstack-guest/getkey/<tag>`
    - EVM-friendly remote attestation: `http://dstack-guest/attest/<tag>/<appdata>`
-  
-Have a look at the demo greeting app at [./app-example/app.py](./app-example/app.py).
-
-Read the setup scripts, host service, guest services, in under 2000 lines of python and bash.
 
 ### Try it now
-To play along with the test network, you need Sepolia testnet coins from a faucet, and an Alchemy API key.
+To play along with the Dstack test network, you need a linux environment with qemu and kvm, Sepolia testnet coins from a faucet, and a Sepolia API key. You do NOT need a trusted hardware capable machine like SGX/TDX.
 
-Once you have that, you can try this on your linux laptop right now, with no TDX required.
 - Building the VM and sample app: under 5 minutes
 - Booting and joining the network: under 60 seconds
-- Disk space required: 2GB
+- Disk space required: ~4GB
 
-### How does the replication work?
-The main production is a `virt-customize` script that builds the VM, starting from a minimal ubuntu base image, and including mainly python, nginx, and foundry. See [./build_vm.sh](./build_vm.sh).
 
-The [startup script](./vm_files/startup_script.sh) kicks off the [registration process](./vm_files/register.py), whose entire goal is to get us a copy of the shared secret. This works by posting a transaction on-chain, passing along a remote attestation. Any existing node on the network can verify the remote attestation, and respond on-chain. See a sample [Register](https://sepolia.etherscan.io/inputdatadecoder?tx=0xa62346a8b5b1ae2bd85b393e770f8214b32122f9cf2880c6f766ff4d0d0ad665) transaction and an [Onboard](https://sepolia.etherscan.io/inputdatadecoder?tx=0x3ed316f9005f5b738db06ddd79920baf9fb5bcb2a2d46a33f11b19f8d9fff939) transaction.
+## How it works 
+
+### Replicatoor
+- [./guest/replicatoor.py](./guest/replicatoor.py) 
+
+When the Dstack VM starts up, it goes straight to the Replicatoor to get a copy of the network-wide shared secret. 
+This works by posting a transaction on-chain, passing along a remote attestation. 
+Any existing node on the network can verify the remote attestation, and respond on-chain. 
+See a sample [Register](https://sepolia.etherscan.io/inputdatadecoder?tx=0xa62346a8b5b1ae2bd85b393e770f8214b32122f9cf2880c6f766ff4d0d0ad665) transaction and an [Onboard](https://sepolia.etherscan.io/inputdatadecoder?tx=0x3ed316f9005f5b738db06ddd79920baf9fb5bcb2a2d46a33f11b19f8d9fff939) transaction.
 
 The protocol is illustrated below:
 
 <img src="https://github.com/user-attachments/assets/8d304f41-acc7-4574-a06b-362d8c8eecae" width=50%/>
 
-The verification works with actual TDX DCAP quotes. But if you run the VM without a TDX, then attestations are provided from a dummy service. 
-Here's a summary of the components: 
+To keep gas costs down, the raw remote attestation quotes are only handled off-chain. A bootstrapping quote from the first enclave is checked into [./auditing](./auditing) so it can be inspected at auditing time. Otherwise, quotes from a new node are inspected by an existing node before handing over a copy of the key.
 
-<img src="https://github.com/user-attachments/assets/e26aae6c-cc6b-4e45-a3ec-5be30fa621b0" width=50%/>
+Note that the implementation here works with actual TDX DCAP quotes. But if you run the VM without a TDX, then attestations are provided from a dummy service. 
 
-### What's the deal with the HTTPS?
+### Unstoppable TLS
+- [./guest/unstoppable_tls.py](./guest/unstoppable_tls.py) 
 
-The private key for the HTTPS server is derived from the replicated secret. Nodes generate a CSR. We get the certificate issued by letsencrypt, and it shows up on the CA website.
+Dstack uses the replicated secret to derive a shared TLS private key for the HTTPS server. 
+To proactively check a certificate (similar to RATLS or aTLS), verify a signature from the EVM-friendly remote attestation over the public key in the certificate.
 
-To proactively check a certificate (similar to RATLS or aTLS), verify the EVM-friendly remote attestation over the public key in the certificate. To rely on certificate transparency and public auditors, the auditors can easily check the quotes in [./auditing](./auditing) to see that a valid TDX DCAP quote explains the provenance of every public key listed at https://crt.sh/?q=dstack-mockup.ln.soc1024.com.
+Nodes generate a Certificate Signing Request (CSR) after obtaining the key. We get the certificate issued by letsencrypt, and it shows up on certificate transparency websites like https://crt.sh/?q=dstack-mockup.ln.soc1024.com. To rely on certificate transparency and public auditors, listed at https://crt.sh/?q=dstack-mockup.ln.soc1024.com.
+
+### KubernEthes
+- [./guest/kubernethes.py](./guest/kubernethes.py) 
+
+In Dstack, a smart contract is the owner of the cluster. The smart contract keeps track of the desired container image (see the [field in the explorer](https://sepolia.etherscan.io/address/0x262ee8243e568ae38af2c3bcbb8d526bbba14485#readContract#F1)), and the Kubernethes script monitors for changes and reloads the container as needed.
+
 
 ## Building the VM image
-
+- [./build_vm.sh](./build_vm.sh)
+  
 It's not necessary to have TDX to play along, since this image is meant to be easy to run in a environment. Instead it's just necessary to install qemu and libvirt.
 
 ```bash
@@ -139,13 +142,15 @@ Finally here's a little tmux script that runs  the host services and the VM
 ```
 <img src="https://github.com/user-attachments/assets/27f82557-6e74-4112-9f5a-820addc31f48" width=70%/>
 
-## More details
+## More details (TODO)
+
+Here's a summary of the components: 
+<img src="https://github.com/user-attachments/assets/e26aae6c-cc6b-4e45-a3ec-5be30fa621b0" width=50%/>
 
 ### Host service 
 The provided `host_service.py` script monitors the Sepolia blockchain, looking for valid requests, and if they are valid then passes them to the enclave. The resulting ciphertext is then posted on-chain, where the node attempting to register will be able to see it.
 
 ### Auditing
-
 
 ### Best effort gossip
 Since the blobs are too expensive to send entire quotes, we're just running a service, see `host.env.example` and `pubsub.py`.
